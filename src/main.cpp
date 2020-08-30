@@ -1,11 +1,23 @@
-#include <M5Stack.h>
+#include "M5Atom.h"
 #include <WiFi.h>
 #include "EL.h"
 #include <Adafruit_BMP280.h>
 #include <Adafruit_SHT31.h>
 
-#define WIFI_SSID "ssid"         // !!!! change
+#define WIFI_SSID "ssid" // !!!! change
 #define WIFI_PASS "pass" // !!!! change
+
+extern const unsigned char AtomImageData[2 + 3 * (5 + 1) * 20 * 5];
+extern const unsigned char image_0[3 * 5 * 5];
+extern const unsigned char image_1[3 * 5 * 5];
+extern const unsigned char image_2[3 * 5 * 5];
+extern const unsigned char image_3[3 * 5 * 5];
+extern const unsigned char image_4[3 * 5 * 5];
+extern const unsigned char image_5[3 * 5 * 5];
+extern const unsigned char image_6[3 * 5 * 5];
+extern const unsigned char image_7[3 * 5 * 5];
+extern const unsigned char image_8[3 * 5 * 5];
+extern const unsigned char image_9[3 * 5 * 5];
 
 WiFiClient client;
 WiFiUDP elUDP;
@@ -43,9 +55,11 @@ void printNetData()
     Serial.println("---");
 }
 
-void setup() {
-    M5.begin();
-    M5.Lcd.setTextSize(2);
+uint8_t *buf = new uint8_t[sizeof(AtomImageData)];
+void setup()
+{
+    M5.begin(true, false, true);
+    Wire.begin(26, 32, 10000);
 
     Serial.begin(115200);
     Serial.println(F("BMP280 Sensor event test"));
@@ -67,7 +81,6 @@ void setup() {
         while (1) delay(1);
     }
 
-    M5.Lcd.println("wifi connect start");
 
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED)
@@ -75,7 +88,6 @@ void setup() {
         Serial.println("wait...");
         delay(1000);
     }
-    M5.Lcd.println("wifi connect ok");
     M5.update();
 
     printNetData();
@@ -122,10 +134,7 @@ void setup() {
     const byte deoj[] = {0x0e, 0xf0, 0x01};
     echo.sendMultiOPC1(seoj, deoj, EL_INF, 0xd5, echo.profile[0xd5]);
 
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setTextColor(WHITE);
-    M5.Lcd.setCursor(10, 10);
-    M5.Lcd.setTextSize(2);
+    memcpy(buf, AtomImageData, sizeof(AtomImageData));
 }
 
 int getDeviceId(byte eoj0, byte eoj1, byte eoj2) {
@@ -141,6 +150,53 @@ int getDeviceId(byte eoj0, byte eoj1, byte eoj2) {
     Serial.printf("devId:%d, eoj:%02x%02x%02x", id, eoj0, eoj1, eoj2);
     Serial.println();
     return id;
+}
+
+// 数値変換テーブル
+const unsigned char **table = new const unsigned char *[10] {
+        image_0,
+        image_1,
+        image_2,
+        image_3,
+        image_4,
+        image_5,
+        image_6,
+        image_7,
+        image_8,
+        image_9,
+};
+
+void conv(uint8_t n, int x, CRGB color = CRGB(0xff, 0xff, 0xff))
+{
+    // 19 charactor at x / 6 byte at charactor
+    if (n > 9 || x > 18)
+        return;
+
+    const int width  = (int)AtomImageData[0];
+    const int height = (int)AtomImageData[1];
+    const int font_x = 5;
+    const int font_y = 5;
+
+    const unsigned char *p = table[n];
+
+    // int pos = 0;
+    // for (int y = 0; y < font_y; y++)
+    // {
+    //     for (int x = 0; x < font_x; x++){
+    //         // Serial.printf("%02x, %02x, %02x, ", p[y * font_x * 3 + x * 3 + 0], p[y * font_x * 3 + x * 3 + 1], p[y * font_x * 3 + x * 3 + 2]);
+    //         Serial.printf("%02x, %02x, %02x, ", p[pos++], p[pos++], p[pos++]);
+    //     }
+    //     Serial.println();
+    // }
+    for (int y = 0; y < font_y; y++)
+    {
+        const int d_pos = x * (font_x + 1) * 3 + y * width * 3 + 2;
+        const int s_pos = y * font_x * 3;
+        const int size = font_x * 3;
+        // Serial.printf("d_pos:%d, s_pos:%d, size:%d", d_pos, s_pos, size);
+        // Serial.println();
+        memcpy(&buf[d_pos], &p[s_pos], size);
+    }
 }
 
 int count = 0;
@@ -169,11 +225,6 @@ void loop() {
             Serial.println("Failed to read humidity");
         }
 
-        M5.Lcd.setCursor(0, 10);
-        int height = M5.Lcd.fontHeight(1);
-        M5.Lcd.fillRect(0,10,320,height,BLACK);
-        M5.Lcd.printf("%5.2fC, %5.2f%%, %7.2fhPa", t, h, p);
-
         uint16_t s_t = 0x7fff;
         if (t < -273.2)
             s_t = 0x8000;
@@ -195,6 +246,18 @@ void loop() {
 
         Serial.printf("t:%04x, h:%02x, p:%04x", s_t, buf_h[1], s_p);
         Serial.println();
+        // 12.3C 12% 1234.5hPa
+        conv(s_t / 100 % 10, 0);
+        conv(s_t / 10 % 10, 1);
+        conv(s_t / 1 % 10, 3);
+        conv(buf_h[1] / 10 % 10, 6);
+        conv(buf_h[1] / 1 % 10, 7);
+        conv(s_p / 10000 % 10, 10);
+        conv(s_p / 1000 % 10, 11);
+        conv(s_p / 100 % 10, 12);
+        conv(s_p / 10 % 10, 13);
+        conv(s_p / 1 % 10, 15);
+        M5.dis.animation(buf, 20, LED_Display::kMoveLeft, 19 * (5 + 1));
     }
 
     // パケット貰ったらやる
@@ -233,6 +296,6 @@ void loop() {
     }
     delay(200);
 
-    count = (count + 1) % 10;
+    count = (count + 1) % 100;
     M5.update();
 }
