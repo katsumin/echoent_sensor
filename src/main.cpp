@@ -196,6 +196,11 @@ void conv(uint8_t n, int x, CRGB color = CRGB(0xff, 0xff, 0xff))
         // Serial.printf("d_pos:%d, s_pos:%d, size:%d", d_pos, s_pos, size);
         // Serial.println();
         memcpy(&buf[d_pos], &p[s_pos], size);
+        for (int i = 0; i < font_x; i++) {
+            buf[d_pos + i * 3 + 0] &= color.r;
+            buf[d_pos + i * 3 + 1] &= color.g;
+            buf[d_pos + i * 3 + 2] &= color.b;
+        }
     }
 }
 
@@ -247,16 +252,16 @@ void loop() {
         Serial.printf("t:%04x, h:%02x, p:%04x", s_t, buf_h[1], s_p);
         Serial.println();
         // 12.3C 12% 1234.5hPa
-        conv(s_t / 100 % 10, 0);
-        conv(s_t / 10 % 10, 1);
-        conv(s_t / 1 % 10, 3);
-        conv(buf_h[1] / 10 % 10, 6);
-        conv(buf_h[1] / 1 % 10, 7);
-        conv(s_p / 10000 % 10, 10);
-        conv(s_p / 1000 % 10, 11);
-        conv(s_p / 100 % 10, 12);
-        conv(s_p / 10 % 10, 13);
-        conv(s_p / 1 % 10, 15);
+        conv(s_t / 100 % 10, 1, CRGB(CRGB::Yellow));
+        conv(s_t / 10 % 10, 2, CRGB(CRGB::Yellow));
+        conv(s_t / 1 % 10, 4, CRGB(CRGB::Yellow));
+        conv(buf_h[1] / 10 % 10, 7, CRGB(CRGB::Yellow));
+        conv(buf_h[1] / 1 % 10, 8, CRGB(CRGB::Yellow));
+        conv(s_p / 10000 % 10, 11, CRGB(CRGB::Yellow));
+        conv(s_p / 1000 % 10, 12, CRGB(CRGB::Yellow));
+        conv(s_p / 100 % 10, 13, CRGB(CRGB::Yellow));
+        conv(s_p / 10 % 10, 14, CRGB(CRGB::Yellow));
+        conv(s_p / 1 % 10, 16, CRGB(CRGB::Yellow));
         M5.dis.animation(buf, 20, LED_Display::kMoveLeft, 19 * (5 + 1));
     }
 
