@@ -450,7 +450,7 @@ void loop()
             conv(s_p / 100 % 10, 13, CRGB(CRGB::Yellow));
             conv(s_p / 10 % 10, 14, CRGB(CRGB::Yellow));
             conv(s_p / 1 % 10, 16, CRGB(CRGB::Yellow));
-            M5.dis.animation(buf, 20, LED_Display::kMoveLeft, 19 * (5 + 1));
+            M5.dis.animation(buf, 20, LED_DisPlay::kMoveLeft, 19 * (5 + 1));
             Serial.println("animated.");
         }
     }
