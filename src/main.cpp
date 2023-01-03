@@ -11,7 +11,6 @@
 
 WiFiClient client;
 WiFiUDP elUDP;
-// EL echo(elUDP, 0x02, 0x90, 0x01);
 byte eojs[][3] = {
     {0x00, 0x11, 0x01}, // 温度センサ
     {0x00, 0x12, 0x01}, // 湿度センサ
@@ -20,10 +19,6 @@ byte eojs[][3] = {
 int devices = sizeof(eojs) / sizeof(byte[3]);
 EL echo(elUDP, eojs, devices);
 
-// Adafruit_BMP280 bmp;
-// Adafruit_Sensor *bmp_temp = bmp.getTemperatureSensor();
-// Adafruit_Sensor *bmp_pressure = bmp.getPressureSensor();
-// Adafruit_SHT31 sht31 = Adafruit_SHT31();
 DFRobot_SCD4X SCD4X(&Wire, /*i2cAddr = */ SCD4X_I2C_ADDR);
 
 #define IP_BUF_LEN (15 + 1)
